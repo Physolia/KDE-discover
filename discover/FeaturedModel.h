@@ -7,7 +7,7 @@
 #ifndef FEATUREDMODEL_H
 #define FEATUREDMODEL_H
 
-#include <QAbstractListModel>
+#include <QAbstractItemModel>
 #include <QPointer>
 
 namespace KIO
@@ -17,19 +17,21 @@ class StoredTransferJob;
 class AbstractResource;
 class AbstractResourcesBackend;
 
-class FeaturedModel : public QAbstractListModel
+class FeaturedModel : public QAbstractItemModel
 {
     Q_OBJECT
     Q_PROPERTY(bool isFetching READ isFetching NOTIFY isFetchingChanged)
 public:
-    FeaturedModel();
-    ~FeaturedModel() override
-    {
-    }
+    explicit FeaturedModel(QObject *parent = nullptr);
+    ~FeaturedModel() override {}
 
-    void setResources(const QVector<AbstractResource *> &resources);
+    void setResources(int category, const QVector<AbstractResource*> &resources);
     QVariant data(const QModelIndex &index, int role) const override;
     int rowCount(const QModelIndex &parent) const override;
+    int columnCount(const QModelIndex &parent) const override;
+    QModelIndex parent(const QModelIndex& child) const override;
+    QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
+    bool hasChildren(const QModelIndex &index) const override;
     QHash<int, QByteArray> roleNames() const override;
 
     bool isFetching() const
@@ -42,15 +44,15 @@ Q_SIGNALS:
 
 private:
     void refreshCurrentApplicationBackend();
-    void setUris(const QVector<QUrl> &uris);
+    void setUris(const QVector<QVector<QUrl>> &uris);
     void refresh();
     void removeResource(AbstractResource *resource);
 
     void acquireFetching(bool f);
 
-    QVector<AbstractResource *> m_resources;
+    QHash<int, QVector<AbstractResource*>> m_resources;
     int m_isFetching = 0;
-    AbstractResourcesBackend *m_backend = nullptr;
+    AbstractResourcesBackend* m_backend = nullptr;
 };
 
 #endif // FEATUREDMODEL_H
