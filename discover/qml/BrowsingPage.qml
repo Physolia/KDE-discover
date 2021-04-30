@@ -101,6 +101,7 @@ DiscoverPage
             width: featureCategory.width
             Kirigami.Heading {
                 Layout.fillWidth: true
+                Layout.topMargin: Kirigami.Units.gridUnit
                 Layout.leftMargin: Kirigami.Units.gridUnit
                 text: categoryName
             }
@@ -111,6 +112,10 @@ DiscoverPage
                 Layout.preferredHeight: Kirigami.Units.gridUnit * 6
                 Component.onCompleted: apps.leftMargin = Kirigami.Units.largeSpacing * 2
                 snapMode: ListView.SnapToItem
+                preferredHighlightBegin: Kirigami.Units.largeSpacing * 2
+                preferredHighlightEnd: featureCategory.width - Kirigami.Units.largeSpacing * 2
+                highlightRangeMode: ListView.ApplyRange
+                keyNavigationWraps: true
                 model: DelegateModel {
                     id: del
                     model: featuredModel
@@ -121,7 +126,7 @@ DiscoverPage
                         application: applicationObject
                     }
                 }
-                currentIndex: -1
+                currentIndex: 0
             }
         }
     }
