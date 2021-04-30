@@ -4,7 +4,7 @@
  *   SPDX-License-Identifier: LGPL-2.0-or-later
  */
 
-import QtQuick 2.4
+import QtQuick 2.15
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.1
 import QtQml.Models 2.15
@@ -99,6 +99,10 @@ DiscoverPage
         model: featuredModel
         delegate: ColumnLayout {
             width: featureCategory.width
+
+            HoverHandler {
+                id: hoverHandler
+            }
             Kirigami.Heading {
                 Layout.fillWidth: true
                 Layout.topMargin: Kirigami.Units.gridUnit
@@ -116,6 +120,34 @@ DiscoverPage
                 preferredHighlightEnd: featureCategory.width - Kirigami.Units.largeSpacing * 2
                 highlightRangeMode: ListView.ApplyRange
                 keyNavigationWraps: true
+
+                RoundButton {
+                    anchors {
+                        left: parent.left
+                        leftMargin: Kirigami.Units.largeSpacing
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: Kirigami.Units.gridUnit * 2
+                    height: width
+                    icon.name: "arrow-left"
+                    visible: hoverHandler.hovered && apps.currentIndex > 0
+                    Keys.forwardTo: apps
+                    onClicked: apps.currentIndex -= 1
+                }
+
+                RoundButton {
+                    anchors {
+                        right: parent.right
+                        rightMargin: Kirigami.Units.largeSpacing
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: Kirigami.Units.gridUnit * 2
+                    height: width
+                    icon.name: "arrow-right"
+                    visible: hoverHandler.hovered && apps.currentIndex < apps.count - 1
+                    Keys.forwardTo: apps
+                    onClicked: apps.currentIndex += 1
+                }
                 model: DelegateModel {
                     id: del
                     model: featuredModel
