@@ -5,6 +5,7 @@
  */
 
 import QtQuick 2.15
+import QtGraphicalEffects 1.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.1
 import QtQml.Models 2.15
@@ -97,6 +98,86 @@ DiscoverPage
     ListView {
         id: featureCategory
         model: featuredModel
+
+        header: Control {
+            width: featureCategory.width
+            height: Kirigami.Units.gridUnit * 10
+            topPadding: Kirigami.Units.largeSpacing
+            contentItem: PathView {
+                id: pathView
+                readonly property bool itemIsWide: pathView.width / 3 > Kirigami.Units.gridUnit * 14
+                /// Item width on small scren: only show one item fully and partially the left and right item
+                // (Kirigami.Units.gridUnit * 2 for each item)
+                readonly property int itemWidthSmall: width - smallExternalMargins * 2
+
+                /// Item width on large screen: e.g. 3 item always displayed
+                readonly property int itemWidthLarge: pathView.width / 3
+
+                readonly property int smallExternalMargins: width > Kirigami.Units.gridUnit * 25 ? Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 2
+                pathItemCount: itemIsWide ? 5 : 3
+                model: ListModel {
+                    ListElement {
+                        name: "Kate"
+                        description: "Get an Edge in Editing"
+                        gradientStart: "#00d2ff";
+                        gradientEnd: "#3a47d5";
+                    }
+                    ListElement {
+                        name: "KDevelop"
+                        gradientStart: "#01d486";
+                        gradientEnd: "#3daee8";
+                    }
+                    ListElement {
+                        name: "KDenlive"
+                        gradientStart: "#E93A9A";
+                        gradientEnd: "#EF973C";
+                        colorName: "green"
+                    }
+                    ListElement {
+                        name: "Krita"
+                        colorName: "yellow"
+                        gradientStart: "#00d2ff";
+                        gradientEnd: "#3a47d5";
+                    }
+                    ListElement {
+                        colorName: "orange"
+                        gradientStart: "#00d2ff";
+                        gradientEnd: "#3a47d5";
+                    }
+                }
+                preferredHighlightBegin: 0.5
+                preferredHighlightEnd: 0.5
+                highlightRangeMode: PathView.StrictlyEnforceRange
+                delegate: Rectangle {
+                    width: (pathView.itemIsWide ? pathView.itemWidthLarge : pathView.itemWidthSmall) - Kirigami.Units.gridUnit * 2
+                    x: Kirigami.Units.gridUnit
+                    height: PathView.view.height
+                    color: model.colorName
+                    radius: Kirigami.Units.largeSpacing
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: model.gradientStart}
+                        GradientStop { position: 1.0; color: model.gradientEnd}
+                    }
+                    Kirigami.Heading {
+                        anchors.centerIn: parent
+                        text: name
+                    }
+                }
+                path: Path {
+                    startX: pathView.itemIsWide ? (-pathView.width / 3) : (-pathView.itemWidthSmall + pathView.smallExternalMargins)
+                    startY: pathView.height/2
+                    PathLine {
+                        x: pathView.width / 2
+                        y: pathView.height / 2
+                    }
+                    PathLine {
+                        x: pathView.itemIsWide ? pathView.width * 4 / 3 : (pathView.width + pathView.itemWidthSmall - pathView.smallExternalMargins)
+                        y: pathView.height / 2
+                    }
+                }
+            }
+        }
+
         delegate: ColumnLayout {
             width: featureCategory.width
 
