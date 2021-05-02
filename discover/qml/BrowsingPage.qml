@@ -102,7 +102,7 @@ DiscoverPage
         header: Control {
             width: featureCategory.width
             height: Kirigami.Units.gridUnit * 10
-            topPadding: Kirigami.Units.largeSpacing
+            topPadding: Kirigami.Units.largeSpacing * 2
             contentItem: PathView {
                 id: pathView
                 readonly property bool itemIsWide: pathView.width / 3 > Kirigami.Units.gridUnit * 14
@@ -188,19 +188,26 @@ DiscoverPage
                 Layout.fillWidth: true
                 Layout.topMargin: Kirigami.Units.gridUnit
                 Layout.leftMargin: Kirigami.Units.gridUnit
-                text: categoryName
+                text: categoryName + " " + apps.currentIndex + " " + apps.currentItem.text
             }
             Kirigami.CardsListView {
                 id: apps
-                orientation: ListView.Horizontal 
+                orientation: ListView.Horizontal
                 Layout.fillWidth: true
-                Layout.preferredHeight: Kirigami.Units.gridUnit * 6
+                Layout.preferredHeight: Kirigami.Units.gridUnit * 5
                 Component.onCompleted: apps.leftMargin = Kirigami.Units.largeSpacing * 2
                 snapMode: ListView.SnapToItem
-                preferredHighlightBegin: Kirigami.Units.largeSpacing * 2
-                preferredHighlightEnd: featureCategory.width - Kirigami.Units.largeSpacing * 2
                 highlightRangeMode: ListView.ApplyRange
+                highlightFollowsCurrentItem: true
                 keyNavigationWraps: true
+                activeFocusOnTab: true
+                currentIndex: 0
+                readonly property int delegateWidth: Kirigami.Units.gridUnit * 13
+                readonly property int itemPerRow: Math.floor(width / Kirigami.Units.gridUnit / 13)
+                readonly property int delegateAdditionaWidth: ((width - Kirigami.Units.largeSpacing * 2) % delegateWidth) / itemPerRow - spacing
+
+                // On desktop otherwise it stealh the whell events
+                interactive: Kirigami.Settings.isMobile
 
                 RoundButton {
                     anchors {
@@ -211,9 +218,16 @@ DiscoverPage
                     width: Kirigami.Units.gridUnit * 2
                     height: width
                     icon.name: "arrow-left"
+                    activeFocusOnTab: false
                     visible: hoverHandler.hovered && apps.currentIndex > 0
                     Keys.forwardTo: apps
-                    onClicked: apps.currentIndex -= 1
+                    onClicked: {
+                        if (apps.currentIndex >= apps.itemPerRow) {
+                            apps.currentIndex -= apps.itemPerRow;
+                        } else {
+                            apps.currentIndex = 0;
+                        }
+                    }
                 }
 
                 RoundButton {
@@ -222,24 +236,28 @@ DiscoverPage
                         rightMargin: Kirigami.Units.largeSpacing
                         verticalCenter: parent.verticalCenter
                     }
+                    activeFocusOnTab: false
                     width: Kirigami.Units.gridUnit * 2
                     height: width
                     icon.name: "arrow-right"
-                    visible: hoverHandler.hovered && apps.currentIndex < apps.count - 1
+                    visible: hoverHandler.hovered && apps.currentIndex + apps.itemPerRow < apps.count
                     Keys.forwardTo: apps
-                    onClicked: apps.currentIndex += 1
+                    onClicked: if (apps.currentIndex + apps.itemPerRow <= apps.count) {
+                        apps.currentIndex += apps.itemPerRow;
+                    } else {
+                        apps.currentIndex = apps.count - 1;
+                    }
                 }
+
                 model: DelegateModel {
-                    id: del
                     model: featuredModel
                     rootIndex: modelIndex(index)
                     delegate: MiniApplicationDelegate {
                         implicitHeight: Kirigami.Units.gridUnit * 5
-                        implicitWidth: Kirigami.Units.gridUnit * 13
+                        implicitWidth: apps.delegateWidth + apps.delegateAdditionaWidth
                         application: applicationObject
                     }
                 }
-                currentIndex: 0
             }
         }
     }
