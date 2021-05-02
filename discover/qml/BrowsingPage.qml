@@ -184,30 +184,48 @@ DiscoverPage
             HoverHandler {
                 id: hoverHandler
             }
+
             Kirigami.Heading {
                 Layout.fillWidth: true
                 Layout.topMargin: Kirigami.Units.gridUnit
                 Layout.leftMargin: Kirigami.Units.gridUnit
-                text: categoryName + " " + apps.currentIndex + " " + apps.currentItem.text
+                text: categoryName
             }
             Kirigami.CardsListView {
                 id: apps
+
+                readonly property int delegateWidth: Kirigami.Units.gridUnit * 13
+                readonly property int itemPerRow: Math.floor(width / Kirigami.Units.gridUnit / 13)
+                readonly property int delegateAdditionaWidth: ((width - Kirigami.Units.largeSpacing * 2 + Kirigami.Units.smallSpacing) % delegateWidth) / itemPerRow - spacing
+
                 orientation: ListView.Horizontal
                 Layout.fillWidth: true
                 Layout.preferredHeight: Kirigami.Units.gridUnit * 5
-                Component.onCompleted: apps.leftMargin = Kirigami.Units.largeSpacing * 2
+                leftMargin: Kirigami.Units.largeSpacing * 2
                 snapMode: ListView.SnapToItem
-                highlightRangeMode: ListView.ApplyRange
                 highlightFollowsCurrentItem: true
                 keyNavigationWraps: true
                 activeFocusOnTab: true
+                preferredHighlightBegin: Kirigami.Units.largeSpacing * 2
+                preferredHighlightEnd: featureCategory.width - Kirigami.Units.largeSpacing * 2
+                highlightRangeMode: ListView.ApplyRange
                 currentIndex: 0
-                readonly property int delegateWidth: Kirigami.Units.gridUnit * 13
-                readonly property int itemPerRow: Math.floor(width / Kirigami.Units.gridUnit / 13)
-                readonly property int delegateAdditionaWidth: ((width - Kirigami.Units.largeSpacing * 2) % delegateWidth) / itemPerRow - spacing
 
-                // On desktop otherwise it stealh the whell events
+                // Otherwise, on deskop the list view steal the vertical wheel events
                 interactive: Kirigami.Settings.isMobile
+
+                // HACK: needed otherwise the listview doesn't move
+                onCurrentIndexChanged: {
+                    anim.running = false;
+
+                    const pos = apps.contentX;
+                    positionViewAtIndex(currentIndex, ListView.SnapPosition);
+                    const destPos = apps.contentX;
+                    anim.from = pos;
+                    anim.to = destPos;
+                    anim.running = true;
+                }
+                NumberAnimation { id: anim; target: apps; property: "contentX"; duration: 500 }
 
                 RoundButton {
                     anchors {
