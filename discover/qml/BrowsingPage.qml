@@ -1,5 +1,6 @@
 /*
  *   SPDX-FileCopyrightText: 2015 Aleix Pol Gonzalez <aleixpol@blue-systems.com>
+ *   SPDX-FileCopyrightText: 2021 Carl Schwan <carlschwan@kde.org>
  *
  *   SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -21,7 +22,7 @@ DiscoverPage
     leftPadding: 0
     rightPadding: 0
     topPadding: 0
-    bottomPadding: 0
+    bottomPadding: Kirigami.Units.largeSpacing * 2
 
     actions.main: searchAction
 
@@ -93,6 +94,9 @@ DiscoverPage
 
     FeaturedModel {
         id: featuredModel
+        onIsFetchingChanged: if (!isFetching) {
+            slidesTimer.start();
+        }
     }
 
     ListView {
@@ -115,40 +119,21 @@ DiscoverPage
 
                 readonly property int smallExternalMargins: width > Kirigami.Units.gridUnit * 25 ? Kirigami.Units.gridUnit * 4 : Kirigami.Units.gridUnit * 2
                 pathItemCount: itemIsWide ? 5 : 3
-                model: ListModel {
-                    ListElement {
-                        name: "Kate"
-                        description: "Get an Edge in Editing"
-                        gradientStart: "#00d2ff";
-                        gradientEnd: "#3a47d5";
-                    }
-                    ListElement {
-                        name: "KDevelop"
-                        gradientStart: "#01d486";
-                        gradientEnd: "#3daee8";
-                    }
-                    ListElement {
-                        name: "KDenlive"
-                        gradientStart: "#E93A9A";
-                        gradientEnd: "#EF973C";
-                        colorName: "green"
-                    }
-                    ListElement {
-                        name: "Krita"
-                        colorName: "yellow"
-                        gradientStart: "#00d2ff";
-                        gradientEnd: "#3a47d5";
-                    }
-                    ListElement {
-                        colorName: "orange"
-                        gradientStart: "#00d2ff";
-                        gradientEnd: "#3a47d5";
-                    }
-                }
+                model: featuredModel.specialApps
                 preferredHighlightBegin: 0.5
                 preferredHighlightEnd: 0.5
                 highlightRangeMode: PathView.StrictlyEnforceRange
+
+                Timer {
+                    id: slidesTimer
+                    running: false
+                    interval: 5000
+                    repeat: true
+                    onTriggered: pathView.incrementCurrentIndex()
+                }
+
                 delegate: Rectangle {
+                    id: colorfulRectangle
                     width: (pathView.itemIsWide ? pathView.itemWidthLarge : pathView.itemWidthSmall) - Kirigami.Units.gridUnit * 2
                     x: Kirigami.Units.gridUnit
                     height: PathView.view.height
@@ -158,9 +143,24 @@ DiscoverPage
                         GradientStop { position: 0.0; color: model.gradientStart}
                         GradientStop { position: 1.0; color: model.gradientEnd}
                     }
-                    Kirigami.Heading {
+                    ColumnLayout {
                         anchors.centerIn: parent
-                        text: name
+                        Label {
+                            color: "white"
+                            text: model.applicationObject.name
+                            font.pointSize: 24
+                            Layout.alignment: Qt.AlignHCenter
+                            horizontalAlignment: Text.AlignHCenter
+                        }
+                        Kirigami.Heading {
+                            color: "white"
+                            level: 2
+                            wrapMode: Text.WordWrap
+                            Layout.alignment: Qt.AlignHCenter
+                            horizontalAlignment: Text.AlignHCenter
+                            Layout.maximumWidth: colorfulRectangle.width - Kirigami.Units.largeSpacing * 2
+                            text: model.applicationObject.comment
+                        }
                     }
                 }
                 path: Path {

@@ -1,14 +1,16 @@
 /*
  *   SPDX-FileCopyrightText: 2016 Aleix Pol Gonzalez <aleixpol@blue-systems.com>
+ *   SPDX-FileCopyrightText: 2021 Carl Schwan <carlschwan@kde.org>
  *
- *   SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+ *   SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicnseRef-KDE-Accepted-GPL
  */
 
 #ifndef FEATUREDMODEL_H
 #define FEATUREDMODEL_H
 
-#include <QAbstractItemModel>
+#include <QAbstractListModel>
 #include <QPointer>
+#include <QUrl>
 
 namespace KIO
 {
@@ -16,16 +18,24 @@ class StoredTransferJob;
 }
 class AbstractResource;
 class AbstractResourcesBackend;
+class SpecialAppsModel;
 
+struct FeaturedApp {
+    QUrl id;
+    QString gradientStart;
+    QString gradientEnd;
+};
+
+/// Displays the apps
 class FeaturedModel : public QAbstractItemModel
 {
     Q_OBJECT
     Q_PROPERTY(bool isFetching READ isFetching NOTIFY isFetchingChanged)
+    Q_PROPERTY(QAbstractItemModel *specialApps READ specialApps CONSTANT)
 public:
     explicit FeaturedModel(QObject *parent = nullptr);
-    ~FeaturedModel() override {}
+    ~FeaturedModel() override = default;
 
-    void setResources(int category, const QVector<AbstractResource*> &resources);
     QVariant data(const QModelIndex &index, int role) const override;
     int rowCount(const QModelIndex &parent) const override;
     int columnCount(const QModelIndex &parent) const override;
@@ -39,20 +49,25 @@ public:
         return m_isFetching != 0;
     }
 
+    QAbstractItemModel *specialApps() const;
+
 Q_SIGNALS:
     void isFetchingChanged();
 
 private:
+    void setResources(const QString &category, const QVector<AbstractResource *> &resources);
     void refreshCurrentApplicationBackend();
-    void setUris(const QVector<QVector<QUrl>> &uris);
+    void setUris(const QHash<QString, QVector<QUrl>> &uris, const QVector<FeaturedApp> &featuredApp);
     void refresh();
     void removeResource(AbstractResource *resource);
 
     void acquireFetching(bool f);
 
-    QHash<int, QVector<AbstractResource*>> m_resources;
+    // we are using a vector to have
+    QVector<QPair<QString, QVector<AbstractResource *>>> m_resources;
     int m_isFetching = 0;
     AbstractResourcesBackend* m_backend = nullptr;
+    SpecialAppsModel *m_specialAppsModel;
 };
 
 #endif // FEATUREDMODEL_H

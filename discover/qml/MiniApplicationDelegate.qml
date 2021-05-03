@@ -65,7 +65,7 @@ Kirigami.AbstractCard
                 level: 5
                 Layout.fillWidth: true
                 elide: Text.ElideRight
-                text: delegateArea.application.categoryDisplay
+                text: delegateArea.application.comment
                 maximumLineCount: 1
                 opacity: 0.6
                 visible: delegateArea.application.categoryDisplay && delegateArea.application.categoryDisplay !== page.title && !parent.bigTitle

@@ -1,5 +1,6 @@
 /*
  *   SPDX-FileCopyrightText: 2016 Aleix Pol Gonzalez <aleixpol@blue-systems.com>
+ *   SPDX-FileCopyrightText: 2021 Carl Schwan <carlschwan@kde.org>
  *
  *   SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
  */
@@ -8,14 +9,14 @@
 
 #include "discover_debug.h"
 #include <KIO/StoredTransferJob>
+#include <KLocalizedString>
+#include <QAbstractListModel>
 #include <QDir>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QStandardPaths>
 #include <QtGlobal>
-#include <KIO/StoredTransferJob>
-#include <KLocalizedString>
 
 #include <resources/ResourcesModel.h>
 #include <resources/StoredResultsStream.h>
@@ -23,8 +24,87 @@
 
 Q_GLOBAL_STATIC(QString, featuredCache)
 
+struct FeaturedAppResource {
+    QString gradientStart;
+    QString gradientEnd;
+    AbstractResource *resource;
+};
+
+/// Display the apps at the top of the browsing page
+class SpecialAppsModel : public QAbstractListModel
+{
+    Q_OBJECT
+public:
+    explicit SpecialAppsModel(QObject *parent = nullptr)
+        : QAbstractListModel(parent)
+    {
+    }
+
+    ~SpecialAppsModel() override = default;
+
+    enum CustomRoles {
+        GradientStartRole,
+        GradientEndRole,
+    };
+
+    QVariant data(const QModelIndex &index, int role) const override
+    {
+        if (!index.isValid()) {
+            return {};
+        }
+
+        const auto &appInfo = m_resources[index.row()];
+        qDebug() << index.row() << m_resources.count();
+
+        switch (role) {
+        case GradientStartRole:
+            return appInfo.gradientStart;
+        case GradientEndRole:
+            return appInfo.gradientEnd;
+        case Qt::UserRole: {
+            auto res = appInfo.resource;
+            if (!res) {
+                return {};
+            }
+
+            return QVariant::fromValue<QObject *>(res);
+        }
+        }
+        return {};
+    }
+
+    int rowCount(const QModelIndex &parent) const override
+    {
+        Q_UNUSED(parent);
+        return m_resources.count();
+    }
+
+    QHash<int, QByteArray> roleNames() const override
+    {
+        return {{GradientStartRole, QByteArrayLiteral("gradientStart")},
+                {GradientEndRole, QByteArrayLiteral("gradientEnd")},
+                {Qt::UserRole, QByteArrayLiteral("applicationObject")}};
+    }
+
+    void setResources(const QVector<FeaturedAppResource> &resources)
+    {
+        if (!m_resources.isEmpty()) {
+            beginRemoveRows({}, 0, m_resources.count() - 1);
+            m_resources = {};
+            endRemoveRows();
+        }
+        beginInsertRows({}, 0, resources.count() - 1);
+        m_resources = resources;
+        endInsertRows();
+    }
+
+private:
+    QVector<FeaturedAppResource> m_resources;
+};
+
 FeaturedModel::FeaturedModel(QObject *parent)
     : QAbstractItemModel(parent)
+    , m_specialAppsModel(new SpecialAppsModel(this))
 {
     connect(ResourcesModel::global(), &ResourcesModel::currentApplicationBackendChanged, this, &FeaturedModel::refreshCurrentApplicationBackend);
 
@@ -82,7 +162,6 @@ void FeaturedModel::refresh()
     // usually only useful if launching just fwupd or kns backends
     if (!m_backend)
         return;
-    
 
     acquireFetching(true);
     const auto dest = qScopeGuard([this] {
@@ -94,44 +173,52 @@ void FeaturedModel::refresh()
         return;
     }
     QJsonParseError error;
-    const auto array = QJsonDocument::fromJson(f.readAll(), &error).array();
+    const auto object = QJsonDocument::fromJson(f.readAll(), &error).object();
     if (error.error) {
         qCWarning(DISCOVER_LOG) << "couldn't parse" << *featuredCache << ". error:" << error.errorString();
         return;
     }
-    
-    QVector<QVector<QUrl>> urisCategory;
-    for (const QJsonValue &category: array) {
-        const auto uris = kTransform<QVector<QUrl>>(category.toArray(), [](const QJsonValue& uri) { return QUrl(uri.toString()); });
-        urisCategory.append(uris);
+
+    QHash<QString, QVector<QUrl>> urisCategory;
+    const auto categories = object[QStringLiteral("categories")].toObject();
+    for (const auto &name : categories.keys()) {
+        const auto category = categories[name];
+        urisCategory[name] = kTransform<QVector<QUrl>>(categories[name].toArray(), [](const QJsonValue &uri) {
+            return QUrl(uri.toString());
+        });
     }
 
-    setUris(urisCategory);
+    QVector<FeaturedApp> apps;
+    for (const auto &app : object[QStringLiteral("featured")].toArray()) {
+        const auto appObject = app.toObject();
+        apps.append(FeaturedApp{QUrl(appObject[QStringLiteral("id")].toString()),
+                                appObject[QStringLiteral("gradient_start")].toString(),
+                                appObject[QStringLiteral("gradient_end")].toString()});
+    }
+
+    setUris(urisCategory, apps);
 }
 
-void FeaturedModel::setUris(const QVector<QVector<QUrl>>& uris)
+template<typename T>
+class asKeyValueRange
 {
-    if (!m_backend) {
-        return;
+public:
+    asKeyValueRange(T &data)
+        : m_data{data}
+    {
+    }
+    auto begin()
+    {
+        return m_data.keyValueBegin();
+    }
+    auto end()
+    {
+        return m_data.keyValueEnd();
     }
 
-    for (int i = 0; i < uris.count(); i++) {
-        QSet<ResultsStream*> streams;
-        for(const auto &uri : qAsConst(uris[i])) {
-            AbstractResourcesBackend::Filters filter;
-            filter.resourceUrl = uri;
-            streams << m_backend->search(filter);
-        }
-        if (!streams.isEmpty()) {
-            auto stream = new StoredResultsStream(streams);
-            acquireFetching(true);
-            connect(stream, &StoredResultsStream::finishedResources,
-                    this, [i, this](const QVector<AbstractResource *> &resources) {
-                setResources(i, resources);
-            });
-        }
-    }
-}
+private:
+    T &m_data;
+};
 
 static void filterDupes(QVector<AbstractResource *> &resources)
 {
@@ -143,6 +230,59 @@ static void filterDupes(QVector<AbstractResource *> &resources)
         } else {
             found.insert(id);
             ++it;
+        }
+    }
+}
+
+void FeaturedModel::setUris(const QHash<QString, QVector<QUrl>> &uris, const QVector<FeaturedApp> &featuredApps)
+{
+    if (!m_backend) {
+        return;
+    }
+
+    QSet<ResultsStream *> streams;
+    for (const auto &featuredApp : featuredApps) {
+        AbstractResourcesBackend::Filters filter;
+        filter.resourceUrl = featuredApp.id;
+        streams << m_backend->search(filter);
+    }
+    if (!streams.isEmpty()) {
+        auto stream = new StoredResultsStream(streams);
+        acquireFetching(true);
+        connect(stream, &StoredResultsStream::finishedResources, this, [this, featuredApps](const QVector<AbstractResource *> &_resources) {
+            QVector<AbstractResource *> abstractResources = _resources;
+
+            filterDupes(abstractResources);
+            QVector<FeaturedAppResource> resources;
+
+            // O(n^2) complexity that could theorically be improved but it's a small n
+            for (const auto &resource : abstractResources) {
+                for (const auto &app : featuredApps) {
+                    if (app.id == resource->url()) {
+                        qDebug() << "Adding" << resource->name() << "at" << resources.count();
+                        resources.append(FeaturedAppResource{app.gradientStart, app.gradientEnd, resource});
+                        break;
+                    }
+                }
+            }
+
+            m_specialAppsModel->setResources(resources);
+        });
+    }
+
+    for (const auto [name, category] : asKeyValueRange(uris)) {
+        QSet<ResultsStream *> streams;
+        for (const auto &uri : category) {
+            AbstractResourcesBackend::Filters filter;
+            filter.resourceUrl = uri;
+            streams << m_backend->search(filter);
+        }
+        if (!streams.isEmpty()) {
+            auto stream = new StoredResultsStream(streams);
+            acquireFetching(true);
+            connect(stream, &StoredResultsStream::finishedResources, this, [name, this](const QVector<AbstractResource *> &resources) {
+                setResources(name, resources);
+            });
         }
     }
 }
@@ -160,25 +300,32 @@ void FeaturedModel::acquireFetching(bool f)
     Q_ASSERT(m_isFetching >= 0);
 }
 
-void FeaturedModel::setResources(int category, const QVector<AbstractResource *>& _resources)
+void FeaturedModel::setResources(const QString &category, const QVector<AbstractResource *> &_resources)
 {
     auto resources = _resources;
     filterDupes(resources);
 
-    if (m_resources[category] != resources) {
-        if (!m_resources.contains(category)) {
-            beginInsertRows({}, category, category);
-            m_resources[category] = QVector<AbstractResource *>();
-            endInsertRows();
-        }
-        beginRemoveRows(index(category, 0), 0, m_resources[category].count());
-        m_resources[category] = resources;
-        endRemoveRows();
-        beginInsertRows(index(category, 0), 0, m_resources[category].count());
+    // Calculate row value
+    int i = 0;
+    while (i < m_resources.count() && m_resources[i].first != category) {
+        i++;
+    }
+
+    if (i == m_resources.count()) {
+        // new category
+        beginInsertRows({}, i, i);
+        m_resources.append({category, resources});
         endInsertRows();
-        // FIXME hack
-        beginResetModel();
-        endResetModel();
+
+        beginInsertRows(index(i, 0), 0, m_resources[i].second.count() - 1);
+        endInsertRows();
+    } else if (m_resources[i].second != resources) {
+        // existing category
+        beginRemoveRows(index(i, 0), 0, m_resources[i].second.count());
+        m_resources[i] = {category, resources};
+        endRemoveRows();
+        beginInsertRows(index(i, 0), 0, m_resources[i].second.count() - 1);
+        endInsertRows();
     }
 
     acquireFetching(false);
@@ -187,45 +334,46 @@ void FeaturedModel::setResources(int category, const QVector<AbstractResource *>
 void FeaturedModel::removeResource(AbstractResource *resource)
 {
     for (int category = 0; category < m_resources.count(); category++) {
-        int i = m_resources[category].indexOf(resource);
+        int i = m_resources[category].second.indexOf(resource);
         if (i < 0) {
             continue;
         }
         beginRemoveRows(index(category, 0), i, i);
-        m_resources[category].removeAt(i);
+        m_resources[category].second.removeAt(i);
         endRemoveRows();
     }
 }
 
 QVariant FeaturedModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return {};
-    
+    }
+
     if (index.parent().isValid()) {
+        // application
         if (role != Qt::UserRole) {
             return {};
         }
-        auto res = m_resources[index.parent().row()].value(index.row());
+        auto res = m_resources[index.parent().row()].second.value(index.row());
         if (!res) {
             return {};
         }
 
         return QVariant::fromValue<QObject*>(res);
     }
-    
+
+    // category
     if (role == Qt::DisplayRole) {
-        switch (index.row()) {
-            case 0:
-                return i18n("Create");
-            case 1:
-                return i18n("Work");
-            case 2:
-                return i18n("Play");
-            case 3:
-                return i18n("Develop");
-            default:
-                return {};
+        const auto categoryName = m_resources[index.row()].first;
+        if (categoryName == QStringLiteral("create")) {
+            return i18n("Create");
+        } else if (categoryName == QStringLiteral("productivity")) {
+            return i18n("Productivity");
+        } else if (categoryName == QStringLiteral("play")) {
+            return i18n("Play");
+        } else if (categoryName == QStringLiteral("develop")) {
+            return i18n("Develop");
         }
     }
     return {};
@@ -250,7 +398,7 @@ QModelIndex FeaturedModel::parent(const QModelIndex &child) const
 int FeaturedModel::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid()) {
-        return m_resources[parent.row()].count();
+        return m_resources[parent.row()].second.count();
     }
     return m_resources.count();
 }
@@ -276,3 +424,10 @@ QHash<int, QByteArray> FeaturedModel::roleNames() const
         {Qt::UserRole, QByteArrayLiteral("applicationObject")}
     };
 }
+
+QAbstractItemModel *FeaturedModel::specialApps() const
+{
+    return m_specialAppsModel;
+}
+
+#include "FeaturedModel.moc"
