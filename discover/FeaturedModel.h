@@ -22,6 +22,7 @@ class SpecialAppsModel;
 
 struct FeaturedApp {
     QUrl id;
+    QString color;
     QString gradientStart;
     QString gradientEnd;
 };

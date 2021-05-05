@@ -23,9 +23,8 @@ PathView {
     preferredHighlightEnd: 0.5
     highlightRangeMode: PathView.StrictlyEnforceRange
 
-    Timer {
-        id: slidesTimer
-        running: false
+    property var timer: Timer {
+        running: true
         interval: 5000
         repeat: true
         onTriggered: pathView.incrementCurrentIndex()
@@ -56,7 +55,7 @@ PathView {
                 Layout.alignment: Qt.AlignHCenter
             }
             Label {
-                color: "white"
+                color: model.color
                 text: model.applicationObject.name
                 font.pointSize: 24
                 Layout.alignment: Qt.AlignHCenter
@@ -68,7 +67,7 @@ PathView {
                 FontMetrics {
                     id: textMetricsDesc
                 }
-                color: "white"
+                color: model.color
                 level: 2
                 wrapMode: Text.WordWrap
                 Layout.alignment: Qt.AlignHCenter

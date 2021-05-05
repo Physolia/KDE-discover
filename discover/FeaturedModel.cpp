@@ -25,6 +25,7 @@
 Q_GLOBAL_STATIC(QString, featuredCache)
 
 struct FeaturedAppResource {
+    QString color;
     QString gradientStart;
     QString gradientEnd;
     AbstractResource *resource;
@@ -45,6 +46,7 @@ public:
     enum CustomRoles {
         GradientStartRole,
         GradientEndRole,
+        ColorRole,
     };
 
     QVariant data(const QModelIndex &index, int role) const override
@@ -60,6 +62,8 @@ public:
             return appInfo.gradientStart;
         case GradientEndRole:
             return appInfo.gradientEnd;
+        case ColorRole:
+            return appInfo.color;
         case Qt::UserRole: {
             auto res = appInfo.resource;
             if (!res) {
@@ -82,6 +86,7 @@ public:
     {
         return {{GradientStartRole, QByteArrayLiteral("gradientStart")},
                 {GradientEndRole, QByteArrayLiteral("gradientEnd")},
+                {ColorRole, QByteArrayLiteral("color")},
                 {Qt::UserRole, QByteArrayLiteral("applicationObject")}};
     }
 
@@ -191,6 +196,7 @@ void FeaturedModel::refresh()
     for (const auto &app : object[QStringLiteral("featured")].toArray()) {
         const auto appObject = app.toObject();
         apps.append(FeaturedApp{QUrl(appObject[QStringLiteral("id")].toString()),
+                                appObject[QStringLiteral("color")].toString(),
                                 appObject[QStringLiteral("gradient_start")].toString(),
                                 appObject[QStringLiteral("gradient_end")].toString()});
     }
@@ -258,7 +264,7 @@ void FeaturedModel::setUris(const QHash<QString, QVector<QUrl>> &uris, const QVe
             for (const auto &resource : abstractResources) {
                 for (const auto &app : featuredApps) {
                     if (app.id == resource->url()) {
-                        resources.append(FeaturedAppResource{app.gradientStart, app.gradientEnd, resource});
+                        resources.append(FeaturedAppResource{app.color, app.gradientStart, app.gradientEnd, resource});
                         break;
                     }
                 }
