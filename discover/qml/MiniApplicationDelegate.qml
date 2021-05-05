@@ -12,28 +12,16 @@ import QtQuick.Window 2.1
 import "navigation.js" as Navigation
 import org.kde.kirigami 2.6 as Kirigami
 
-Kirigami.AbstractCard
-{
+Kirigami.AbstractCard {
     id: delegateArea
-    property alias application: installButton.application
     showClickFeedback: true
-
-    function trigger() {
-        Navigation.openApplication(applicationObject)
-    }
-    Keys.onReturnPressed: trigger()
-    onClicked: trigger()
 
     contentItem: Item {
         implicitHeight: Kirigami.Units.gridUnit * 2
 
-        InstallApplicationButton {
-            id: installButton
-            visible: false
-        }
         Kirigami.Icon {
             id: resourceIcon
-            source: application.icon
+            source: model.applicationObject.icon
             height: Kirigami.Units.gridUnit * 3
             width: height
             anchors {
@@ -56,7 +44,7 @@ Kirigami.AbstractCard
                 level: delegateArea.compact ? 3 : 2
                 Layout.fillWidth: true
                 elide: Text.ElideRight
-                text: delegateArea.application.name
+                text: model.applicationObject.name
                 maximumLineCount: 1
             }
 
@@ -65,10 +53,10 @@ Kirigami.AbstractCard
                 level: 5
                 Layout.fillWidth: true
                 elide: Text.ElideRight
-                text: delegateArea.application.comment
+                text: model.applicationObject.comment
                 maximumLineCount: 1
                 opacity: 0.6
-                visible: delegateArea.application.categoryDisplay && delegateArea.application.categoryDisplay !== page.title && !parent.bigTitle
+                visible: model.applicationObject.categoryDisplay && model.applicationObject.categoryDisplay !== page.title && !parent.bigTitle
             }
 
             RowLayout {
@@ -76,13 +64,13 @@ Kirigami.AbstractCard
                 Layout.topMargin: Kirigami.Units.smallSpacing
                 Layout.fillWidth: true
                 Rating {
-                    rating: delegateArea.application.rating ? delegateArea.application.rating.sortableRating : 0
-                    starSize: delegateArea.compact ? summary.font.pointSize : head.font.pointSize
+                    rating: model.applicationObject.rating ? model.applicationObject.rating.sortableRating : 0
+                    starSize: head.font.pointSize
                 }
                 Label {
                     Layout.fillWidth: true
-                    text: delegateArea.application.rating ? i18np("%1 rating", "%1 ratings", delegateArea.application.rating.ratingCount) : i18n("No ratings yet")
-                    visible: delegateArea.application.rating || delegateArea.application.backend.reviewsBackend.isResourceSupported(delegateArea.application)
+                    text: model.applicationObject.rating ? i18np("%1 rating", "%1 ratings", model.applicationObject.rating.ratingCount) : i18n("No ratings yet")
+                    visible: model.applicationObject.rating || model.applicationObject.backend.reviewsBackend.isResourceSupported(model.applicationObject)
                     opacity: 0.5
                     elide: Text.ElideRight
                 }

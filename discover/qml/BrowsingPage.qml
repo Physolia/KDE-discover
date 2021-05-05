@@ -136,7 +136,7 @@ DiscoverPage {
                     width: (pathView.itemIsWide ? pathView.itemWidthLarge : pathView.itemWidthSmall) - Kirigami.Units.gridUnit * 2
                     x: Kirigami.Units.gridUnit
                     height: PathView.view.height
-                    onClicked: Navigation.openApplication(application)
+                    onClicked: Navigation.openApplication(applicationObject)
                     background: Rectangle {
                         radius: Kirigami.Units.largeSpacing
                         gradient: Gradient {
@@ -292,7 +292,6 @@ DiscoverPage {
                     delegate: MiniApplicationDelegate {
                         implicitHeight: Kirigami.Units.gridUnit * 5
                         implicitWidth: apps.delegateWidth + apps.delegateAdditionaWidth
-                        application: applicationObject
                     }
                 }
             }

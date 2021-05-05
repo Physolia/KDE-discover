@@ -54,7 +54,6 @@ public:
         }
 
         const auto &appInfo = m_resources[index.row()];
-        qDebug() << index.row() << m_resources.count();
 
         switch (role) {
         case GradientStartRole:
