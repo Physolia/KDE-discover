@@ -64,9 +64,6 @@ PathView {
 
 
             Kirigami.Heading {
-                FontMetrics {
-                    id: textMetricsDesc
-                }
                 color: model.color
                 level: 2
                 wrapMode: Text.WordWrap
@@ -77,7 +74,7 @@ PathView {
                 text: model.applicationObject.comment
                 maximumLineCount: 2
                 elide: Text.ElideRight
-                Layout.preferredHeight: textMetricsDesc.height * 4
+                Layout.preferredHeight: lineCount === 1 ? implicitHeight * 2 : implicitHeight
             }
         }
     }
