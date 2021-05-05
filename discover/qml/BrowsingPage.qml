@@ -103,7 +103,7 @@ DiscoverPage {
 
         header: Control {
             width: featureCategory.width
-            height: Kirigami.Units.gridUnit * 14
+            height: Kirigami.Units.gridUnit * 12
             topPadding: Kirigami.Units.largeSpacing * 2
             contentItem:  Carousel {
                 model: featuredModel.specialApps
