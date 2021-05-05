@@ -74,7 +74,7 @@ PathView {
                 text: model.applicationObject.comment
                 maximumLineCount: 2
                 elide: Text.ElideRight
-                Layout.preferredHeight: lineCount === 1 ? implicitHeight * 2 : implicitHeight
+                Layout.preferredHeight: lineCount === 1 ? contentHeight * 2 + topPadding + bottomPadding : implicitHeight
             }
         }
     }
