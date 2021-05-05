@@ -33,6 +33,7 @@
     <file>qml/DiscoverPopup.qml</file>
     <file>qml/AboutPage.qml</file>
     <file>qml/Feedback.qml</file>
+    <file>qml/Carousel.qml</file>
 
     <file>qml/navigation.js</file>
  </qresource>
