@@ -1,5 +1,6 @@
 /*
  *   SPDX-FileCopyrightText: 2012 Aleix Pol Gonzalez <aleixpol@blue-systems.com>
+ *   SPDX-FileCopyrightText: 2021 Carl Schwan <carlschwan@kde.org>
  *
  *   SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -18,7 +19,7 @@ Kirigami.AbstractCard
     showClickFeedback: true
 
     function trigger() {
-        Navigation.openApplication(application)
+        Navigation.openApplication(applicationObject)
     }
     Keys.onReturnPressed: trigger()
     onClicked: trigger()
@@ -71,7 +72,6 @@ Kirigami.AbstractCard
             }
 
             RowLayout {
-                visible: showRating
                 spacing: Kirigami.Units.largeSpacing
                 Layout.topMargin: Kirigami.Units.smallSpacing
                 Layout.fillWidth: true
