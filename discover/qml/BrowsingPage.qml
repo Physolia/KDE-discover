@@ -15,8 +15,7 @@ import org.kde.discover.app 1.0
 import "navigation.js" as Navigation
 import org.kde.kirigami 2.14 as Kirigami
 
-DiscoverPage
-{
+DiscoverPage {
     id: page
     title: i18n("Featured")
     leftPadding: 0
@@ -105,7 +104,7 @@ DiscoverPage
 
         header: Control {
             width: featureCategory.width
-            height: Kirigami.Units.gridUnit * 10
+            height: Kirigami.Units.gridUnit * 14
             topPadding: Kirigami.Units.largeSpacing * 2
             contentItem: PathView {
                 id: pathView
@@ -132,19 +131,30 @@ DiscoverPage
                     onTriggered: pathView.incrementCurrentIndex()
                 }
 
-                delegate: Rectangle {
+                delegate: ItemDelegate {
                     id: colorfulRectangle
                     width: (pathView.itemIsWide ? pathView.itemWidthLarge : pathView.itemWidthSmall) - Kirigami.Units.gridUnit * 2
                     x: Kirigami.Units.gridUnit
                     height: PathView.view.height
-                    color: model.colorName
-                    radius: Kirigami.Units.largeSpacing
-                    gradient: Gradient {
-                        GradientStop { position: 0.0; color: model.gradientStart}
-                        GradientStop { position: 1.0; color: model.gradientEnd}
+                    onClicked: Navigation.openApplication(application)
+                    background: Rectangle {
+                        radius: Kirigami.Units.largeSpacing
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: model.gradientStart}
+                            GradientStop { position: 1.0; color: model.gradientEnd}
+                        }
                     }
                     ColumnLayout {
-                        anchors.centerIn: parent
+                        anchors {
+                            centerIn: parent
+                        }
+                        Kirigami.Icon {
+                            id: resourceIcon
+                            source: model.applicationObject.icon
+                            Layout.preferredHeight: Kirigami.Units.gridUnit * 3
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+                            Layout.alignment: Qt.AlignHCenter
+                        }
                         Label {
                             color: "white"
                             text: model.applicationObject.name
@@ -152,14 +162,23 @@ DiscoverPage
                             Layout.alignment: Qt.AlignHCenter
                             horizontalAlignment: Text.AlignHCenter
                         }
+
+
                         Kirigami.Heading {
+                            FontMetrics {
+                                id: textMetricsDesc
+                            }
                             color: "white"
                             level: 2
                             wrapMode: Text.WordWrap
                             Layout.alignment: Qt.AlignHCenter
                             horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignTop
                             Layout.maximumWidth: colorfulRectangle.width - Kirigami.Units.largeSpacing * 2
                             text: model.applicationObject.comment
+                            maximumLineCount: 2
+                            elide: Text.ElideRight
+                            Layout.preferredHeight: textMetricsDesc.height * 4
                         }
                     }
                 }

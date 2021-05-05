@@ -259,7 +259,6 @@ void FeaturedModel::setUris(const QHash<QString, QVector<QUrl>> &uris, const QVe
             for (const auto &resource : abstractResources) {
                 for (const auto &app : featuredApps) {
                     if (app.id == resource->url()) {
-                        qDebug() << "Adding" << resource->name() << "at" << resources.count();
                         resources.append(FeaturedAppResource{app.gradientStart, app.gradientEnd, resource});
                         break;
                     }

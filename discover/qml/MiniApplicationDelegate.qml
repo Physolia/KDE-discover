@@ -20,7 +20,6 @@ Kirigami.AbstractCard
     function trigger() {
         Navigation.openApplication(application)
     }
-    highlighted: delegateRecycler && delegateRecycler.ListView.isCurrentItem
     Keys.onReturnPressed: trigger()
     onClicked: trigger()
 
