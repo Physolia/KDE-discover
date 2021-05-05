@@ -19,8 +19,6 @@ Kirigami.AbstractCard
     property bool showRating: true
 
     readonly property bool appIsFromNonDefaultBackend: ResourcesModel.currentApplicationBackend !== application.backend && application.backend.hasApplications
-    property bool showDownloadButton: true
-
     showClickFeedback: true
 
     function trigger() {
@@ -95,7 +93,6 @@ Kirigami.AbstractCard
                 // and Snap backend items in widescreen mode. Currently blocked
                 // by https://bugs.kde.org/show_bug.cgi?id=433433
 
-                visible: delegateArea.showDownloadButton
             }
 
             RowLayout {
