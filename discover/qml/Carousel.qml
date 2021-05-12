@@ -5,6 +5,7 @@ import QtQuick 2.15
 import QtGraphicalEffects 1.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import "navigation.js" as Navigation
 import org.kde.kirigami 2.14 as Kirigami
 
 PathView {
