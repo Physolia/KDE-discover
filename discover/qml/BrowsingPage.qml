@@ -144,7 +144,7 @@ DiscoverPage {
                 currentIndex: 0
 
                 // Otherwise, on deskop the list view steal the vertical wheel events
-                interactive: Kirigami.Settings.isMobile
+                interactive: Kirigami.Settings.hasTransientTouchInput
 
                 // HACK: needed otherwise the listview doesn't move
                 onCurrentIndexChanged: {
@@ -165,8 +165,6 @@ DiscoverPage {
                         leftMargin: Kirigami.Units.largeSpacing
                         verticalCenter: parent.verticalCenter
                     }
-                    width: Kirigami.Units.gridUnit * 2
-                    height: width
                     icon.name: "arrow-left"
                     activeFocusOnTab: false
                     visible: hoverHandler.hovered && apps.currentIndex > 0
@@ -187,8 +185,6 @@ DiscoverPage {
                         verticalCenter: parent.verticalCenter
                     }
                     activeFocusOnTab: false
-                    width: Kirigami.Units.gridUnit * 2
-                    height: width
                     icon.name: "arrow-right"
                     visible: hoverHandler.hovered && apps.currentIndex + apps.itemPerRow < apps.count
                     Keys.forwardTo: apps
