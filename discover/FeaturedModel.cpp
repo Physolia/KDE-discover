@@ -370,14 +370,16 @@ QVariant FeaturedModel::data(const QModelIndex &index, int role) const
     // category
     if (role == Qt::DisplayRole) {
         const auto categoryName = m_resources[index.row()].first;
-        if (categoryName == QStringLiteral("create")) {
-            return i18n("Create");
-        } else if (categoryName == QStringLiteral("productivity")) {
-            return i18n("Productivity");
+        if (categoryName == QStringLiteral("art")) {
+            return i18n("Art");
+        } else if (categoryName == QStringLiteral("work")) {
+            return i18n("Work");
         } else if (categoryName == QStringLiteral("play")) {
             return i18n("Play");
-        } else if (categoryName == QStringLiteral("develop")) {
-            return i18n("Develop");
+        } else if (categoryName == QStringLiteral("tech")) {
+            return i18n("Technology");
+        } else if (categoryName == QStringLiteral("kids")) {
+            return i18n("Kids");
         }
     }
     return {};
