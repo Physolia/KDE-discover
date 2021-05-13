@@ -126,7 +126,7 @@ DiscoverPage {
             Kirigami.CardsListView {
                 id: apps
 
-                readonly property int delegateWidth: Kirigami.Units.gridUnit * 13
+                readonly property int delegateWidth: Kirigami.Units.gridUnit * 15
                 readonly property int itemPerRow: Math.floor(width / Kirigami.Units.gridUnit / 13)
                 readonly property int delegateAdditionaWidth: (((width - Kirigami.Units.largeSpacing * 2 + Kirigami.Units.smallSpacing) % delegateWidth) / itemPerRow - spacing) - (!applicationWindow().wideScreen ? Kirigami.Units.gridUnit * 2 : 0)
 
