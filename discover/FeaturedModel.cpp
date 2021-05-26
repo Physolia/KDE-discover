@@ -116,10 +116,10 @@ FeaturedModel::FeaturedModel(QObject *parent)
     QDir().mkpath(dir);
 
     const bool isMobile = QByteArrayList{"1", "true"}.contains(qgetenv("QT_QUICK_CONTROLS_MOBILE"));
-    auto fileName = isMobile ? QLatin1String("/featured-mobile-5.9.json") : QLatin1String("/featured-5.9.json");
+    auto fileName = isMobile ? QLatin1String("/featured-mobile-5.23.json") : QLatin1String("/featured-5.23.json");
     *featuredCache = dir + fileName;
     const QUrl featuredUrl(QStringLiteral("https://autoconfig.kde.org/discover") + fileName);
-    auto *fetchJob = KIO::storedGet(QUrl(QStringLiteral("file:/home/carl/discover-test.json")), KIO::NoReload, KIO::HideProgressInfo);
+    auto *fetchJob = KIO::storedGet(featuredUrl, KIO::NoReload, KIO::HideProgressInfo);
     acquireFetching(true);
     connect(fetchJob, &KIO::StoredTransferJob::result, this, [this, fetchJob]() {
         const auto dest = qScopeGuard([this] {
@@ -374,6 +374,12 @@ QVariant FeaturedModel::data(const QModelIndex &index, int role) const
             return i18n("Art");
         } else if (categoryName == QStringLiteral("work")) {
             return i18n("Work");
+        } else if (categoryName == QStringLiteral("entertainment")) {
+            return i18n("Entertainment");
+        } else if (categoryName == QStringLiteral("communication")) {
+            return i18n("Communication");
+        } else if (categoryName == QStringLiteral("utilities")) {
+            return i18n("Utilities");
         } else if (categoryName == QStringLiteral("play")) {
             return i18n("Play");
         } else if (categoryName == QStringLiteral("tech")) {
