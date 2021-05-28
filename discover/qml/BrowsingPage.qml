@@ -127,8 +127,33 @@ DiscoverPage {
                 id: apps
 
                 readonly property int delegateWidth: Kirigami.Units.gridUnit * 15
-                readonly property int itemPerRow: Math.floor(width / Kirigami.Units.gridUnit / 13)
-                readonly property int delegateAdditionaWidth: (((width - Kirigami.Units.largeSpacing * 2 + Kirigami.Units.smallSpacing) % delegateWidth) / itemPerRow - spacing) - (!applicationWindow().wideScreen ? Kirigami.Units.gridUnit * 2 : 0)
+                readonly property int itemPerRowBase: Math.floor(width / delegateWidth)
+                readonly property int delegateAdditionalWidth: (((width - Kirigami.Units.largeSpacing * 2 + Kirigami.Units.smallSpacing) % delegateWidth) / itemPerRowBase - spacing) - (!window.wideScreen ? Kirigami.Units.gridUnit * 2 : 0)
+                readonly property int itemPerRow: Math.floor(width / (delegateWidth + delegateAdditionalWidth))
+                property int oldItemPerRow: null
+                onItemPerRowChanged: {
+                    if (oldItemPerRow === null) {
+                        oldItemPerRow = itemPerRow;
+                        return;
+                    }
+                    if (oldItemPerRow > itemPerRow) {
+                        // HACK this is needed because otherwise we get some nasty behaviors from the
+                        // ListView. (e.g SnapToItem not working, last item empty, ...)
+                        currentIndex = 0;
+                    } else {
+                        // HACK use a timer so that all the animation don't happen at the same (very glitchy)
+                        changeToIndexTimer.changeToIndex = Math.min(apps.count - itemPerRow, currentIndex)
+                        changeToIndexTimer.restart();
+                    }
+                    oldItemPerRow = itemPerRow;
+                }
+
+                Timer {
+                    id: changeToIndexTimer
+                    interval: 600
+                    property int changeToIndex: -1
+                    onTriggered: apps.currentIndex = changeToIndex
+                }
 
                 orientation: ListView.Horizontal
                 Layout.fillWidth: true
@@ -188,10 +213,12 @@ DiscoverPage {
                     icon.name: "arrow-right"
                     visible: hoverHandler.hovered && apps.currentIndex + apps.itemPerRow < apps.count
                     Keys.forwardTo: apps
-                    onClicked: if (apps.currentIndex + apps.itemPerRow <= apps.count) {
-                        apps.currentIndex += apps.itemPerRow;
-                    } else {
-                        apps.currentIndex = apps.count - 1;
+                    onClicked: {
+                        if (apps.currentIndex + apps.itemPerRow <= apps.count) {
+                            apps.currentIndex += apps.itemPerRow;
+                        } else {
+                            apps.currentIndex = apps.count - 1;
+                        }
                     }
                 }
 
@@ -200,7 +227,7 @@ DiscoverPage {
                     rootIndex: modelIndex(index)
                     delegate: MiniApplicationDelegate {
                         implicitHeight: Kirigami.Units.gridUnit * 5
-                        implicitWidth: apps.delegateWidth + apps.delegateAdditionaWidth
+                        implicitWidth: apps.delegateWidth + apps.delegateAdditionalWidth
                         onClicked: Navigation.openApplication(model.applicationObject, true)
                     }
                 }
