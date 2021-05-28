@@ -36,7 +36,7 @@ PathView {
         width: (pathView.itemIsWide ? pathView.itemWidthLarge : pathView.itemWidthSmall) - Kirigami.Units.gridUnit * 2
         x: Kirigami.Units.gridUnit
         height: PathView.view.height
-        onClicked: Navigation.openApplication(applicationObject)
+        onClicked: Navigation.openApplication(applicationObject, true)
         background: Rectangle {
             radius: Kirigami.Units.largeSpacing
             gradient: Gradient {

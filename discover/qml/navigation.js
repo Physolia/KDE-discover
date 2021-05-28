@@ -30,9 +30,13 @@ function openCategory(cat, search) {
     openApplicationList({ category: cat, search: search })
 }
 
-function openApplication(app) {
-    console.assert(app)
-    window.stack.push("qrc:/qml/ApplicationPage.qml", { application: app })
+function openApplication(app, onALayer = false) {
+    console.assert(app);
+    if (onALayer) {
+        window.stack.layers.push("qrc:/qml/ApplicationPage.qml", { application: app })
+    } else {
+        window.stack.push("qrc:/qml/ApplicationPage.qml", { application: app })
+    }
 }
 
 function openReviews(model) {

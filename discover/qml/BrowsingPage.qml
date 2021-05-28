@@ -201,6 +201,7 @@ DiscoverPage {
                     delegate: MiniApplicationDelegate {
                         implicitHeight: Kirigami.Units.gridUnit * 5
                         implicitWidth: apps.delegateWidth + apps.delegateAdditionaWidth
+                        onClicked: Navigation.openApplication(model.applicationObject, true)
                     }
                 }
             }
