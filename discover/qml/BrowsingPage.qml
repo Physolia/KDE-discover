@@ -76,7 +76,7 @@ DiscoverPage {
             Kirigami.Icon {
                 Layout.preferredWidth: Kirigami.Units.iconSizes.huge
                 Layout.preferredHeight: Kirigami.Units.iconSizes.huge
-                Layout.topMargin: Kirigami.Units.largeSpacing * 2
+                Layout.topMargin: Kirigami.Units.largeSpacing * 4
                 Layout.alignment: Qt.AlignCenter
                 source: model.applicationObject.icon
             }
@@ -266,7 +266,7 @@ DiscoverPage {
 
         model: featuredModel
         delegate: CategoryDelegate {
-            width: featuredCategory.width > 1000 ? 1000 : featuredCategory.width
+            width: featuredCategory.width > 900 ? 900 : featuredCategory.width
             anchors.horizontalCenter: parent.horizontalCenter
         }
 
