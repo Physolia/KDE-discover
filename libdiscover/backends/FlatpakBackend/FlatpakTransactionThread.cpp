@@ -9,6 +9,7 @@
 
 #include <KLocalizedString>
 #include <QDebug>
+#include <QDesktopServices>
 
 static int FLATPAK_CLI_UPDATE_FREQUENCY = 150;
 
@@ -58,6 +59,27 @@ void operation_error_cb(FlatpakTransaction * /*object*/, FlatpakTransactionOpera
     obj->addErrorMessage(QString::fromUtf8(error->message));
 }
 
+gboolean webflow_start_cb(FlatpakTransaction *transaction, const char *remote, const char *url, GVariant *options, guint id, gpointer user_data)
+{
+    Q_UNUSED(transaction);
+    Q_UNUSED(options);
+    Q_UNUSED(id);
+    Q_UNUSED(user_data);
+
+    QUrl webflowUrl(QString::fromUtf8(url));
+    qDebug() << "starting web flow" << webflowUrl << remote;
+    return QDesktopServices::openUrl(webflowUrl);
+}
+
+void webflow_done_cb(FlatpakTransaction *transaction, GVariant *options, guint id, gpointer user_data)
+{
+    Q_UNUSED(transaction);
+    Q_UNUSED(options);
+    Q_UNUSED(id);
+    Q_UNUSED(user_data);
+    qDebug() << "webflow done";
+}
+
 FlatpakTransactionThread::FlatpakTransactionThread(FlatpakResource *app, Transaction::Role role)
     : QThread()
     , m_result(false)
@@ -75,6 +97,8 @@ FlatpakTransactionThread::FlatpakTransactionThread(FlatpakResource *app, Transac
         g_signal_connect(m_transaction, "add-new-remote", G_CALLBACK(add_new_remote_cb), this);
         g_signal_connect(m_transaction, "new-operation", G_CALLBACK(new_operation_cb), this);
         g_signal_connect(m_transaction, "operation-error", G_CALLBACK(operation_error_cb), this);
+        g_signal_connect(m_transaction, "webflow-start", G_CALLBACK(webflow_start_cb), this);
+        g_signal_connect(m_transaction, "webflow-done", G_CALLBACK(webflow_done_cb), this);
     }
 }
 
