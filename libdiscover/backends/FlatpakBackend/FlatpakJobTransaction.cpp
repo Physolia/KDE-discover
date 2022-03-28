@@ -13,16 +13,40 @@
 #include <QDebug>
 #include <QTimer>
 
-FlatpakJobTransaction::FlatpakJobTransaction(FlatpakResource *app, Role role, bool delayStart)
+static QHash<FlatpakInstallation *, QSharedPointer<FlatpakTransactionThread>> s_pending;
+
+QSharedPointer<FlatpakTransactionThread> jobForInstallation(FlatpakInstallation *installation)
+{
+    auto &inst = s_pending[installation];
+    if (!inst) {
+        inst = QSharedPointer<FlatpakTransactionThread>::create(installation);
+    }
+    return inst;
+}
+
+FlatpakJobTransaction::FlatpakJobTransaction(FlatpakResource *app, Role role)
     : Transaction(app->backend(), app, role, {})
     , m_app(app)
+    , m_appJob(jobForInstallation(app->installation()))
 {
     setCancellable(true);
     setStatus(QueuedStatus);
+    m_appJob->add(m_app, role);
+    connect(m_appJob.data(), &FlatpakTransactionThread::finished, this, &FlatpakJobTransaction::finishTransaction);
+    connect(m_appJob.data(), &FlatpakTransactionThread::progressChanged, this, [this](const QByteArray &currentRef, int progress) {
+        if (currentRef == m_app->ref())
+            setProgress(progress);
+    });
+    connect(m_appJob.data(), &FlatpakTransactionThread::speedChanged, this, [this](const QByteArray &currentRef, int speed) {
+        if (currentRef == m_app->ref())
+            setDownloadSpeed(speed);
+    });
+    connect(m_appJob.data(), &FlatpakTransactionThread::passiveMessage, this, [this](const QByteArray &currentRef, const QString &message) {
+        if (currentRef == m_app->ref())
+            passiveMessage(message);
+    });
 
-    if (!delayStart) {
-        QTimer::singleShot(0, this, &FlatpakJobTransaction::start);
-    }
+    QTimer::singleShot(0, this, &FlatpakJobTransaction::start);
 }
 
 FlatpakJobTransaction::~FlatpakJobTransaction()
@@ -31,7 +55,6 @@ FlatpakJobTransaction::~FlatpakJobTransaction()
         cancel();
         m_appJob->wait();
     }
-    delete m_appJob;
 }
 
 void FlatpakJobTransaction::cancel()
@@ -43,13 +66,7 @@ void FlatpakJobTransaction::start()
 {
     setStatus(CommittingStatus);
 
-    // App job will be added every time
-    m_appJob = new FlatpakTransactionThread(m_app, role());
-    connect(m_appJob, &FlatpakTransactionThread::finished, this, &FlatpakJobTransaction::finishTransaction);
-    connect(m_appJob, &FlatpakTransactionThread::progressChanged, this, &FlatpakJobTransaction::setProgress);
-    connect(m_appJob, &FlatpakTransactionThread::speedChanged, this, &FlatpakJobTransaction::setDownloadSpeed);
-    connect(m_appJob, &FlatpakTransactionThread::passiveMessage, this, &FlatpakJobTransaction::passiveMessage);
-
+    s_pending.remove(m_app->installation());
     m_appJob->start();
 }
 

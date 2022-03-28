@@ -19,9 +19,10 @@ class FlatpakTransactionThread : public QThread
 {
     Q_OBJECT
 public:
-    FlatpakTransactionThread(FlatpakResource *app, Transaction::Role role);
+    FlatpakTransactionThread(FlatpakInstallation *installation);
     ~FlatpakTransactionThread() override;
 
+    void add(FlatpakResource *app, Transaction::Role role);
     void cancel();
     void run() override;
 
@@ -45,15 +46,21 @@ public:
         return m_addedRepositories;
     }
 
+    void setCurrentRef(const QByteArray &ref)
+    {
+        m_currentRef = ref;
+    }
+
 Q_SIGNALS:
-    void progressChanged(int progress);
-    void speedChanged(quint64 speed);
-    void passiveMessage(const QString &msg);
+    void progressChanged(const QByteArray &currentRef, int progress);
+    void speedChanged(const QByteArray &currentRef, quint64 speed);
+    void passiveMessage(const QByteArray &currentRef, const QString &msg);
 
 private:
     static gboolean
     add_new_remote_cb(FlatpakTransaction * /*object*/, gint /*reason*/, gchar *from_id, gchar *suggested_remote_name, gchar *url, gpointer user_data);
 
+    QByteArray m_currentRef;
     FlatpakTransaction *m_transaction;
     bool m_result = false;
     bool m_cancelled = false;
@@ -61,8 +68,6 @@ private:
     quint64 m_speed = 0;
     QString m_errorMessage;
     GCancellable *m_cancellable;
-    FlatpakResource *const m_app;
-    const Transaction::Role m_role;
     QStringList m_addedRepositories;
 };
 

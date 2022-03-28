@@ -21,7 +21,7 @@ class FlatpakJobTransaction : public Transaction
 {
     Q_OBJECT
 public:
-    FlatpakJobTransaction(FlatpakResource *app, Role role, bool delayStart = false);
+    FlatpakJobTransaction(FlatpakResource *app, Role role);
 
     ~FlatpakJobTransaction();
 
@@ -38,7 +38,7 @@ private:
     void updateProgress();
 
     QPointer<FlatpakResource> m_app;
-    QPointer<FlatpakTransactionThread> m_appJob;
+    QSharedPointer<FlatpakTransactionThread> m_appJob;
 };
 
 #endif // FLATPAKJOBTRANSACTION_H
