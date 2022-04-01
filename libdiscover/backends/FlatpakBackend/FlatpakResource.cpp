@@ -277,6 +277,11 @@ QUrl FlatpakResource::donationURL()
     return m_appdata.url(AppStream::Component::UrlKindDonation);
 }
 
+QUrl FlatpakResource::contributeURL()
+{
+    return m_appdata.url(AppStream::Component::UrlKindContribute);
+}
+
 FlatpakResource::FlatpakFileType FlatpakResource::flatpakFileType() const
 {
     return m_flatpakFileType;
